@@ -2003,6 +2003,208 @@ platforms:
 
 </details>
 
+### 1.5 怎么添加别人的 RSS 订阅源？
+
+<details id="添加RSS订阅源">
+<summary>👉 点击展开：<strong>部署外部 RSS 资源</strong></summary>
+<br>
+
+**配置位置：** `config/config.yaml` 的 `rss` 部分
+
+TrendRadar 支持订阅任何标准的 RSS/Atom 源，让你可以聚合各类博客、新闻网站、播客等内容。RSS 内容会与热榜一起推送，使用相同的关键词过滤机制。
+
+#### 📝 基础配置
+
+在 `config/config.yaml` 中添加 RSS 源：
+
+```yaml
+rss:
+  enabled: true                       # 是否启用 RSS 抓取
+  
+  freshness_filter:
+    enabled: true                     # 是否启用新鲜度过滤
+    max_age_days: 3                   # 只推送 3 天内的文章
+  
+  feeds:
+    - id: "hacker-news"               # 唯一标识（自定义，建议使用英文）
+      name: "Hacker News"             # 显示名称（推送时显示）
+      url: "https://hnrss.org/frontpage"  # RSS 订阅地址
+      
+    - id: "ruanyifeng"
+      name: "阮一峰的网络日志"
+      url: "http://www.ruanyifeng.com/blog/atom.xml"
+      max_age_days: 7                 # 此源推送 7 天内的文章（覆盖全局设置）
+```
+
+#### 🔍 如何找到 RSS 订阅地址？
+
+**方法一：网站直接提供**
+许多网站会直接提供 RSS 订阅链接，通常标有 RSS 图标 或显示为 "订阅" / "RSS" / "Feed"。
+
+**方法二：使用 RSS 发现工具**
+- **浏览器扩展**：
+  - [RSS Hub Radar](https://github.com/DIYgod/RSSHub-Radar)（Chrome/Firefox）
+  - [Awesome RSS](https://github.com/shgysk8zer0/awesome-rss)（Chrome）
+  
+- **在线工具**：
+  - [RSS Feed Finder](https://rss.app/rss-feed-finder)
+  - [GetRSSFeed](https://www.getrssfeed.com/)
+
+**方法三：检查网页源代码**
+查看网页源代码，搜索 `type="application/rss+xml"` 或 `type="application/atom+xml"`：
+
+```html
+<link rel="alternate" type="application/rss+xml" href="https://example.com/feed.xml" />
+```
+
+#### 📚 优质 RSS 源推荐
+
+以下是一些精选的 RSS 订阅源合集，可按需添加：
+
+**科技与编程**：
+- [awesome-tech-rss](https://github.com/tuan3w/awesome-tech-rss) - 科技、创业、编程领域博客和媒体
+- [Hacker News](https://hnrss.org/frontpage) - 科技新闻聚合
+- [GitHub Trending](https://mshibanami.github.io/GitHubTrendingRSS/) - GitHub 热门项目
+
+**新闻媒体**：
+- [awesome-rss-feeds](https://github.com/plenaryapp/awesome-rss-feeds) - 世界各国主流新闻媒体 RSS 合集
+- [RSSHub](https://docs.rsshub.app/) - 万物皆可 RSS（支持微博、B站、知乎等）
+
+**中文博客**：
+- 阮一峰的网络日志：`http://www.ruanyifeng.com/blog/atom.xml`
+- 酷壳 CoolShell：`https://coolshell.cn/feed`
+- 小众软件：`https://www.appinn.com/feed/`
+
+#### ⚙️ 高级配置
+
+**1. 自定义文章过滤时间**
+
+不同源的更新频率不同，可以单独设置过滤时间：
+
+```yaml
+feeds:
+  - id: "daily-blog"
+    name: "每日博客"
+    url: "https://example.com/feed.xml"
+    max_age_days: 1                   # 只推送 1 天内的文章
+    
+  - id: "weekly-newsletter"
+    name: "每周周刊"
+    url: "https://example.com/weekly.xml"
+    max_age_days: 7                   # 推送 7 天内的文章
+    
+  - id: "important-source"
+    name: "重要资源"
+    url: "https://example.com/important.xml"
+    max_age_days: 0                   # 0 = 推送所有文章，不过滤
+```
+
+**2. 完整展示 RSS 源（不受关键词限制）**
+
+有些订阅源内容较少但很重要，想完整查看所有文章，可以配置独立展示区：
+
+```yaml
+display:
+  regions:
+    standalone: true                  # 启用独立展示区
+    
+  standalone:
+    rss_feeds: ["hacker-news", "weekly-newsletter"]  # 这些源完整显示
+    max_items: 20                     # 每个源最多显示 20 条
+```
+
+**3. 结合 AI 翻译使用**
+
+订阅国外 RSS 源时，可以启用 AI 翻译功能自动翻译为中文：
+
+```yaml
+ai_translation:
+  enabled: true
+  target_language: "zh-CN"            # 翻译为简体中文
+```
+
+#### 🔧 常见问题
+
+**Q1: RSS 源添加后没有内容推送？**
+
+检查以下几点：
+1. RSS 源地址是否正确（在浏览器中访问是否返回 XML 格式）
+2. 文章发布时间是否超过 `max_age_days` 设置（默认 3 天）
+3. 文章标题是否匹配 `frequency_words.txt` 中的关键词
+4. 查看运行日志确认是否成功抓取
+
+**Q2: 如何不过滤关键词，推送所有 RSS 内容？**
+
+有两种方法：
+- **方法一**（推荐）：使用独立展示区（见上方"完整展示 RSS 源"）
+- **方法二**：将 `frequency_words.txt` 留空（会推送所有热榜和 RSS 内容）
+
+**Q3: RSS 抓取失败怎么办？**
+
+1. 确认 RSS 源 URL 可访问（使用在线 RSS 阅读器测试）
+2. 检查是否需要特殊网络环境（某些源可能需要代理）
+3. 尝试使用 RSSHub 等服务生成的镜像源
+4. 查看 Docker 日志：`docker logs trendradar`
+
+**Q4: 支持哪些 RSS 格式？**
+
+支持所有标准格式：
+- RSS 2.0
+- RSS 1.0（RDF）
+- Atom 1.0
+
+#### 💡 最佳实践
+
+1. **从少到多**：先添加 2-3 个核心源测试，确认正常后再扩展
+2. **合理设置过滤时间**：根据源的更新频率调整 `max_age_days`
+3. **配合关键词使用**：在 `frequency_words.txt` 中设置感兴趣的关键词，避免信息过载
+4. **定期清理**：删除不再关注的 RSS 源，保持订阅列表精简
+
+#### 📖 完整配置示例
+
+```yaml
+rss:
+  enabled: true
+  
+  freshness_filter:
+    enabled: true
+    max_age_days: 3
+  
+  feeds:
+    # 科技新闻
+    - id: "hacker-news"
+      name: "Hacker News"
+      url: "https://hnrss.org/frontpage"
+      max_age_days: 1
+      
+    # 中文博客
+    - id: "ruanyifeng"
+      name: "阮一峰的网络日志"
+      url: "http://www.ruanyifeng.com/blog/atom.xml"
+      max_age_days: 7
+      
+    # 开源项目动态
+    - id: "github-trending"
+      name: "GitHub Trending"
+      url: "https://mshibanami.github.io/GitHubTrendingRSS/weekly/all.xml"
+      
+    # 重要周刊（完整展示）
+    - id: "tech-weekly"
+      name: "科技周刊"
+      url: "https://example.com/weekly.xml"
+      max_age_days: 0  # 不过滤，推送所有内容
+
+# 配合独立展示区使用
+display:
+  regions:
+    standalone: true
+  standalone:
+    rss_feeds: ["tech-weekly"]  # 周刊完整展示
+    max_items: 20
+```
+
+</details>
+
 ### 2. 我关心什么内容？
 
 在 `frequency_words.txt` 文件中告诉机器人你想看什么，它就会帮你盯着。支持普通词、必须词、过滤词等多种玩法。
