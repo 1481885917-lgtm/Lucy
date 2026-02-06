@@ -1933,6 +1933,209 @@ platforms:
 
 </details>
 
+### 1.5 How to Add External RSS Feeds?
+
+<details id="adding-rss-feeds">
+<summary>👉 Click to expand: <strong>Deploying External RSS Resources</strong></summary>
+<br>
+
+**Configuration Location:** `rss` section in `config/config.yaml`
+
+TrendRadar supports subscribing to any standard RSS/Atom feeds, allowing you to aggregate content from blogs, news sites, podcasts, and more. RSS content will be pushed along with trending news and uses the same keyword filtering mechanism.
+
+#### 📝 Basic Configuration
+
+Add RSS feeds in `config/config.yaml`:
+
+```yaml
+rss:
+  enabled: true                       # Enable RSS crawling
+  
+  freshness_filter:
+    enabled: true                     # Enable freshness filtering
+    max_age_days: 3                   # Only push articles from last 3 days
+  
+  feeds:
+    - id: "hacker-news"               # Unique identifier (custom, recommend English)
+      name: "Hacker News"             # Display name (shown in push)
+      url: "https://hnrss.org/frontpage"  # RSS feed URL
+      
+    - id: "ruanyifeng"
+      name: "Ruan Yifeng's Blog"
+      url: "http://www.ruanyifeng.com/blog/atom.xml"
+      max_age_days: 7                 # Push articles from last 7 days (overrides global)
+```
+
+#### 🔍 How to Find RSS Feed URLs?
+
+**Method 1: Website Provides Directly**
+Many websites provide RSS subscription links directly, usually marked with an RSS icon or displayed as "Subscribe" / "RSS" / "Feed".
+
+**Method 2: Use RSS Discovery Tools**
+- **Browser Extensions**:
+  - [RSS Hub Radar](https://github.com/DIYgod/RSSHub-Radar) (Chrome/Firefox)
+  - [Awesome RSS](https://github.com/shgysk8zer0/awesome-rss) (Chrome)
+  
+- **Online Tools**:
+  - [RSS Feed Finder](https://rss.app/rss-feed-finder)
+  - [GetRSSFeed](https://www.getrssfeed.com/)
+
+**Method 3: Check Page Source Code**
+View the page source and search for `type="application/rss+xml"` or `type="application/atom+xml"`:
+
+```html
+<link rel="alternate" type="application/rss+xml" href="https://example.com/feed.xml" />
+```
+
+#### 📚 Recommended Quality RSS Feeds
+
+Here are some curated RSS feed collections you can add as needed:
+
+**Tech & Programming**:
+- [awesome-tech-rss](https://github.com/tuan3w/awesome-tech-rss) - Tech, startup, programming blogs and media
+- [Hacker News](https://hnrss.org/frontpage) - Tech news aggregation
+- [GitHub Trending](https://mshibanami.github.io/GitHubTrendingRSS/) - GitHub trending projects
+
+**News Media**:
+- [awesome-rss-feeds](https://github.com/plenaryapp/awesome-rss-feeds) - Mainstream news media RSS from around the world
+- [RSSHub](https://docs.rsshub.app/) - Everything is RSSible (supports Weibo, Bilibili, Zhihu, etc.)
+
+**English Blogs**:
+- Hacker News: `https://hnrss.org/frontpage`
+- The Verge: `https://www.theverge.com/rss/index.xml`
+- TechCrunch: `https://techcrunch.com/feed/`
+
+#### ⚙️ Advanced Configuration
+
+**1. Custom Article Filtering Time**
+
+Different feeds have different update frequencies, you can set filtering time individually:
+
+```yaml
+feeds:
+  - id: "daily-blog"
+    name: "Daily Blog"
+    url: "https://example.com/feed.xml"
+    max_age_days: 1                   # Only push articles from last 1 day
+    
+  - id: "weekly-newsletter"
+    name: "Weekly Newsletter"
+    url: "https://example.com/weekly.xml"
+    max_age_days: 7                   # Push articles from last 7 days
+    
+  - id: "important-source"
+    name: "Important Source"
+    url: "https://example.com/important.xml"
+    max_age_days: 0                   # 0 = Push all articles, no filtering
+```
+
+**2. Full Display of RSS Feeds (Not Limited by Keywords)**
+
+Some feeds have few but important articles and you want to see all of them. Configure the standalone display section:
+
+```yaml
+display:
+  regions:
+    standalone: true                  # Enable standalone display section
+    
+  standalone:
+    rss_feeds: ["hacker-news", "weekly-newsletter"]  # Full display of these feeds
+    max_items: 20                     # Max 20 items per feed
+```
+
+**3. Use with AI Translation**
+
+When subscribing to foreign RSS feeds, you can enable AI translation to automatically translate to your language:
+
+```yaml
+ai_translation:
+  enabled: true
+  target_language: "zh-CN"            # Translate to Simplified Chinese
+  # or "en" for English, "ja" for Japanese, etc.
+```
+
+#### 🔧 Common Issues
+
+**Q1: No content pushed after adding RSS feed?**
+
+Check the following:
+1. Is the RSS feed URL correct (visit in browser, should return XML format)
+2. Is the article publish time beyond `max_age_days` setting (default 3 days)
+3. Does the article title match keywords in `frequency_words.txt`
+4. Check run logs to confirm successful crawling
+
+**Q2: How to push all RSS content without keyword filtering?**
+
+Two methods:
+- **Method 1** (Recommended): Use standalone display section (see "Full Display of RSS Feeds" above)
+- **Method 2**: Leave `frequency_words.txt` empty (will push all trending and RSS content)
+
+**Q3: What to do if RSS crawling fails?**
+
+1. Confirm RSS feed URL is accessible (test with online RSS reader)
+2. Check if special network environment is needed (some feeds may need proxy)
+3. Try using mirror feeds generated by services like RSSHub
+4. Check Docker logs: `docker logs trendradar`
+
+**Q4: Which RSS formats are supported?**
+
+All standard formats are supported:
+- RSS 2.0
+- RSS 1.0 (RDF)
+- Atom 1.0
+
+#### 💡 Best Practices
+
+1. **Start Small**: Add 2-3 core feeds first for testing, then expand after confirming normal operation
+2. **Set Reasonable Filtering Time**: Adjust `max_age_days` based on feed update frequency
+3. **Use with Keywords**: Set keywords of interest in `frequency_words.txt` to avoid information overload
+4. **Regular Cleanup**: Remove RSS feeds you no longer follow to keep subscription list concise
+
+#### 📖 Complete Configuration Example
+
+```yaml
+rss:
+  enabled: true
+  
+  freshness_filter:
+    enabled: true
+    max_age_days: 3
+  
+  feeds:
+    # Tech News
+    - id: "hacker-news"
+      name: "Hacker News"
+      url: "https://hnrss.org/frontpage"
+      max_age_days: 1
+      
+    # English Blog
+    - id: "techcrunch"
+      name: "TechCrunch"
+      url: "https://techcrunch.com/feed/"
+      max_age_days: 7
+      
+    # Open Source Projects
+    - id: "github-trending"
+      name: "GitHub Trending"
+      url: "https://mshibanami.github.io/GitHubTrendingRSS/weekly/all.xml"
+      
+    # Important Newsletter (Full Display)
+    - id: "tech-weekly"
+      name: "Tech Weekly"
+      url: "https://example.com/weekly.xml"
+      max_age_days: 0  # No filtering, push all content
+
+# Use with standalone display section
+display:
+  regions:
+    standalone: true
+  standalone:
+    rss_feeds: ["tech-weekly"]  # Full display of newsletter
+    max_items: 20
+```
+
+</details>
+
 ### 2. Keyword Configuration
 
 **Configuration Location:** `config/frequency_words.txt`
